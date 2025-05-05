@@ -1,11 +1,10 @@
-import { Amenity } from '../types/amenity.enum.js';
-import { CityName } from '../types/city-name.enum.js';
-import { HousingType } from '../types/housing-type.enum.js';
+import {HousingType, CityName, Amenity} from '../types/index.js';
 
 export class ValuesValidationHandler {
   public constructor(
     private readonly collectionSeparator: string
-  ) {}
+  ) {
+  }
 
   public validateDataTokens(dataTokens: string[]): boolean {
     const [
@@ -41,7 +40,7 @@ export class ValuesValidationHandler {
       amenities.split(this.collectionSeparator).forEach((amenity) => this.validateAmenityEnumStringValue(amenity));
       this.validateStringArrayLength(cityCoordinates.split(this.collectionSeparator), 2, 2);
       return true;
-    } catch {
+    } catch (e) {
       return false;
     }
   }

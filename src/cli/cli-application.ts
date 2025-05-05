@@ -1,46 +1,40 @@
+import { Command } from './commands/command.interface.js';
 import { CommandParser } from './command-parser.js';
-import { Command } from './command.interface.js';
-import { HelpCommand } from './help.command.js';
 
-type CommandWithName = {
-  name: string;
-  command: Command;
-}
+type CommandCollection = Record<string, Command>;
 
 export class CLIApplication {
-  private registeredCommands: CommandWithName[] = [];
+  private commands: CommandCollection = {};
 
-  public constructor(
-    private readonly defaultCommand: CommandWithName = { name: '--help', command: new HelpCommand() }
+  constructor(
+    private readonly defaultCommand: string = '--help'
   ) {}
 
-  public registerCommands(commands: Command[]): void {
-    commands.forEach((command) => {
-      const commandName = command.getName();
-      if (this.registeredCommands.filter((registered) => registered.name === commandName).length > 0) {
-        throw new Error(`Command with name ${commandName} is already registered.`);
+  public registerCommands(commandList: Command[]): void {
+    commandList.forEach((command) => {
+      if (Object.hasOwn(this.commands, command.getName())) {
+        throw new Error(`Command ${command.getName()} is already registered`);
       }
-      this.registeredCommands.push({ name: commandName, command: command });
+      this.commands[command.getName()] = command;
     });
   }
 
-  public getCommand(name: string): Command {
-    const foundCommands = this.registeredCommands.filter((command) => command.name === name);
-    return foundCommands.length === 0 ? this.getDefaultCommand() : foundCommands[0].command;
+  public getCommand(commandName: string): Command {
+    return this.commands[commandName] ?? this.getDefaultCommand();
   }
 
   public getDefaultCommand(): Command | never {
-    const foundCommands = this.registeredCommands.filter((command) => command.name === this.defaultCommand.name);
-    if (foundCommands.length === 0) {
-      throw new Error(`Default command with name "${this.defaultCommand.name}" is not registered.`);
+    if (! this.commands[this.defaultCommand]) {
+      throw new Error(`The default command (${this.defaultCommand}) is not registered.`);
     }
-    return foundCommands[0].command;
+    return this.commands[this.defaultCommand];
   }
 
-  public processCommandLineArgs(args: string[]): void {
-    const parsedCommands = CommandParser.parse(args);
-    const command = this.getCommand(parsedCommands.length > 0 ? parsedCommands[0].name : '');
-    const commandArgs = parsedCommands.length > 0 ? parsedCommands[0].commandArgs : [];
-    command.execute(...commandArgs);
+  public processCommand(argv: string[]): void {
+    const parsedCommand = CommandParser.parse(argv);
+    const [commandName] = Object.keys(parsedCommand);
+    const command = this.getCommand(commandName);
+    const commandArguments = parsedCommand[commandName] ?? [];
+    command.execute(...commandArguments);
   }
 }

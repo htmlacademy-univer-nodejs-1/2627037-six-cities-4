@@ -1,12 +1,13 @@
-import { Amenity } from './amenity.enum.js';
-import { CityCoordinates } from './city-coordinates.type.js';
-import { CityName } from './city-name.enum.js';
-import { HousingType } from './housing-type.enum.js';
+import {Amenity} from './amenity.enum.js';
+import {CityCoordinates} from './city-coordinates.type.js';
+import {CityName} from './city-name.enum.js';
+import {HousingType} from './housing-type.enum.js';
+import {User} from './user.type.js';
 
 export type RentOffer = {
   title: string; // length 10..100
   description: string; // length 20..1024
-  publicationDate: Date;
+  postDate: Date;
   cityName: CityName;
   preview: string; // link or GUID
   photos: string[]; // length 6..6
@@ -18,7 +19,7 @@ export type RentOffer = {
   visitorsCount: number; // values 1..10
   rentCost: number; // values 100..100'000
   amenities: Amenity[]; // length 1+
-  authorLink: string; // link or GUID
+  author: User;
   commentsCount: number;
   cityCoordinates: CityCoordinates;
 }

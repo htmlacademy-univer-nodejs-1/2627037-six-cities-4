@@ -30,7 +30,9 @@ export class TSVFileReader extends EventEmitter implements FileReader {
 
         console.log(chalk.ansi256((importedRowCount + 1) % 256)(completeRow, null, 2));
 
-        this.emit('line', completeRow);
+        await new Promise((resolve) => {
+          this.emit('line', completeRow, resolve);
+        });
       }
     }
 

@@ -1,10 +1,11 @@
 import { inject, injectable } from 'inversify';
 import { RentOfferService } from './rent-offer-service.interface.js';
-import { Component } from '../../types/index.js';
+import { CityName, Component } from '../../types/index.js';
 import { Logger } from '../../libs/logger/index.js';
 import { DocumentType, types } from '@typegoose/typegoose';
 import { RentOfferEntity } from './rent-offer.entity.js';
 import { CreateRentOfferDto } from './dto/create-rent-offer.dto.js';
+import { MAX_ENTRY_COUNT, MAX_PREMIUM_ENTRY_COUNT } from './rent-offer-service.constant.js';
 
 @injectable()
 export class DefaultRentOfferService implements RentOfferService {
@@ -20,7 +21,39 @@ export class DefaultRentOfferService implements RentOfferService {
     return result;
   }
 
-  public async findById(offerId: string): Promise<DocumentType<RentOfferEntity> | null> {
-    return this.offerModel.findById(offerId).exec();
+  public async update(dto: CreateRentOfferDto, rentOfferId: string): Promise<DocumentType<RentOfferEntity>> {
+    const result = { _id: rentOfferId, ... dto };
+    await this.offerModel.replaceOne({ _id: rentOfferId }, result).exec();
+
+    return (await this.findById(rentOfferId))!;
+  }
+
+  public async delete(rentOfferId: string): Promise<void> {
+    await this.offerModel.deleteOne({ _id: rentOfferId });
+  }
+
+  public async getList(maxEntryCount: number = MAX_ENTRY_COUNT): Promise<DocumentType<RentOfferEntity>[]> {
+    const result = await this.offerModel.find().limit(maxEntryCount).exec();
+    return result.sort((a: RentOfferEntity, b: RentOfferEntity) =>
+      b.postDate.getMilliseconds() - a.postDate.getMilliseconds()
+    );
+  }
+
+  public async getPremiumRentOffers(cityName: CityName, maxEntryCount: number = MAX_PREMIUM_ENTRY_COUNT): Promise<RentOfferEntity[]> {
+    const result = await this.offerModel.find({ cityName: cityName }).limit(maxEntryCount);
+    return result.sort((a: RentOfferEntity, b: RentOfferEntity) =>
+      b.postDate.getMilliseconds() - a.postDate.getMilliseconds()
+    );
+  }
+
+  public async findById(rentOfferId: string): Promise<DocumentType<RentOfferEntity> | null> {
+    return this.offerModel.findById(rentOfferId).exec();
+  }
+
+  public async findByIds(rentOfferIds: string[]): Promise<DocumentType<RentOfferEntity>[] | null> {
+    const result = await this.offerModel.find({ id: { $in: rentOfferIds } }).exec();
+    return result.sort((a: RentOfferEntity, b: RentOfferEntity) =>
+      b.postDate.getMilliseconds() - a.postDate.getMilliseconds()
+    );
   }
 }

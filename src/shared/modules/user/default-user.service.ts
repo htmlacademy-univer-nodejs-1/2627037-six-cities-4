@@ -3,7 +3,7 @@ import { DocumentType, types } from '@typegoose/typegoose';
 import { UserEntity } from './user.entity.js';
 import { CreateUserDto } from './dto/create-user.dto.js';
 import { inject, injectable } from 'inversify';
-import { Component } from '../../types/index.js';
+import { Component, UserType } from '../../types/index.js';
 import { Logger } from '../../libs/logger/index.js';
 
 @injectable()
@@ -14,7 +14,11 @@ export class DefaultUserService implements UserService {
   ) {}
 
   public async create(dto: CreateUserDto, salt: string): Promise<DocumentType<UserEntity>> {
-    const user = new UserEntity(dto);
+    const user = new UserEntity({
+      ...dto,
+      userType: UserType.Default,
+      favoriteOfferIds: []
+    });
     user.setPassword(dto.password, salt);
 
     const result = await this.userModel.create(user);
@@ -35,5 +39,26 @@ export class DefaultUserService implements UserService {
     }
 
     return this.create(dto, salt);
+  }
+
+  public async addFavorite(userId: string, offerId: string): Promise<void> {
+    await this.userModel.findByIdAndUpdate(
+      userId,
+      { $push: { favoriteOfferIds: offerId } },
+      { new: true }
+    ).exec();
+  }
+
+  public async removeFavorite(userId: string, offerId: string): Promise<void> {
+    await this.userModel.findByIdAndUpdate(
+      userId,
+      { $pull: { favoriteOfferIds: offerId } },
+      { new: true }
+    ).exec();
+  }
+
+  public async getFavoriteOfferIds(userId: string): Promise<string[]> {
+    const result = await this.userModel.findOne({ _id: userId }).exec();
+    return result ? result.favoriteOfferIds : [];
   }
 }

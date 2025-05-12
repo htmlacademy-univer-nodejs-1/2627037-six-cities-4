@@ -1,0 +1,585 @@
+openapi: 3.1.0
+info:
+  title: API сервер для личного проекта «Шесть городов».
+  description: |-
+    * Список ресурсов и маршрутов сервера «Шесть городов».
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  version: 2.0.0
+tags:
+  - name: rent-offers
+    description: Действия с предложениями по аренде.
+  - name: comments
+    description: Действия с комментариями к предложениям по аренде.
+  - name: users
+    description: Действия с пользователями.
+
+paths:
+  /rent-offers:
+    post:
+      tags:
+        - rent-offers
+      summary: Создание нового предложения по аренде.
+      description: Позволяет авторизованному пользователю создать новое предложение по аренде.
+
+      requestBody:
+        description: Информация для создания нового предложения по аренде.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/rentOffer"
+        required: true
+
+      responses:
+        "201":
+          description: Предложение создано. Возвращает созданный объект предложения.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/rentOffer'
+
+        "400":
+          description: Валидация данных не была пройдена. Предложение не было создано.
+
+        "401":
+          description: Ошибка авторизации. Создавать предложения могут только авторизованные клиенты.
+
+    put:
+      tags:
+        - rent-offers
+      summary: Редактирование существующего предложения.
+      description: Позволяет авторизованному пользователю отредактировать существующее предложение.
+
+      parameters:
+        - name: rentOfferId
+          in: path
+          schema:
+            type: string
+          required: true
+
+      requestBody:
+        description: Информация об изменениях предложения.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/rentOffer"
+        required: true
+
+      responses:
+        "200":
+          description: Предложение отредактировано. Возвращает обновленный объект предложения.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/rentOffer'
+
+        "400":
+          description: Валидация данных не была пройдена. Предложение не было отредактировано.
+
+        "401":
+          description: Ошибка авторизации. Редактировать предложения могут только авторизованные клиенты.
+
+        "403":
+          description: Доступ запрещен. Редактирование доступно только для предложений, созданных вами.
+
+        "404":
+          description: Указанное предложение не существует.
+
+    delete:
+      tags:
+        - rent-offers
+      summary: Удаление предложения и всех связанных с ним комментариев.
+      description: Позволяет авторизованному пользователю удалить предложение и все связанные с ним комментарии.
+
+      requestBody:
+        description: Идентификатор предложения, которое требуется удалить.
+        content:
+          application/json:
+            schema:
+              type: string
+        required: true
+
+      responses:
+        "200":
+          description: Предложение и все связанные комментарии удалены.
+
+        "401":
+          description: Ошибка авторизации. Удалять предложения могут только авторизованные клиенты.
+
+        "403":
+          description: Доступ запрещен. Удаление доступно только для предложений, созданных вами.
+
+        "404":
+          description: Указанное предложение не существует.
+
+  /rent-offers/get-list?count=60:
+    get:
+      tags:
+        - rent-offers
+      summary: Получение списка предложений.
+      description: Позволяет получить список предложений.
+
+      parameters:
+        - name: count
+          in: query
+          schema:
+            type: integer
+          required: true
+
+      responses:
+        "200":
+          description: Получен список предложений.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/rentOfferListElement'
+
+  /rent-offers/info/{rentOfferId}:
+    get:
+      tags:
+        - rent-offers
+      summary: Получение детальной информации по существующему предложению.
+      description: Позволяет получить детальную информацию по существующему предложению.
+
+      parameters:
+        - name: rentOfferId
+          in: path
+          schema:
+            type: string
+          required: true
+
+      responses:
+        "200":
+          description: Получена детальная информация по предложению.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/rentOffer'
+
+        "404":
+          description: Указанное предложение не существует.
+
+  /comments/{rentOfferId}:
+    get:
+      tags:
+        - comments
+      summary: Получение списка последних комментариев к существующему предложению.
+      description: Позволяет получить список последних комментариев к существующему предложению.
+
+      parameters:
+        - name: rentOfferId
+          in: path
+          schema:
+            type: string
+          required: true
+
+      responses:
+        "200":
+          description: Получен список комментариев по предложению.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/createdRentOfferComment'
+
+        "404":
+          description: Указанное предложение не существует.
+
+  /comments/create/{rentOfferId}:
+    post:
+      tags:
+        - comments
+      summary: Добавление комментария к существующему предложению.
+      description: Позволяет авторизованному пользователю добавить комментарий к существующему предложению.
+
+      parameters:
+        - name: rentOfferId
+          in: path
+          schema:
+            type: string
+          required: true
+
+      requestBody:
+        description: Информация о добавляемом комментарии.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/createRentOfferComment"
+        required: true
+
+      responses:
+        "201":
+          description: Комментарий успешно добавлен к предложению.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/createdRentOfferComment'
+
+        "400":
+          description: Валидация данных не была пройдена. Комментарий не был добавлен.
+
+        "403":
+          description: Ошибка авторизации. Добавлять комментарии могут только авторизованные клиенты.
+
+        "404":
+          description: Указанное предложение не существует.
+
+  /users/create:
+    post:
+      tags:
+        - users
+      summary: Регистрация пользователя.
+      description: Регистрирует нового пользователя.
+
+      requestBody:
+        description: Информация для создания нового пользователя.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/createUser'
+        required: true
+
+      responses:
+        "201":
+          description: Пользователь зарегистрирован. Объект пользователя.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/createdUser'
+
+        "400":
+          description: Валидация данных не была пройдена. Пользователь не был создан.
+
+        "403":
+          description: Доступ запрещен. Создавать новых пользователей могут только анонимные клиенты.
+
+        "409":
+          description: Пользователь с таким email уже существует.
+
+  /users/login:
+    post:
+      tags:
+        - users
+      summary: Авторизация пользователя.
+      description: Авторизует пользователя на основе логина (email) и пароля.
+
+      responses:
+        "200":
+          description: Пользователь авторизован. Токен клиента.
+          content:
+            application/json:
+              schema:
+                type: string
+
+        "400":
+          description: Неверный логин (email) или пароль пользователя.
+
+        "403":
+          description: Доступ запрещен. Ресурс доступен только неавторизованным клиентам.
+
+        "404":
+          description: Пользователь не существует.
+
+  /users/logout:
+    post:
+      tags:
+        - users
+      summary: Выход пользователя из закрытой части приложения.
+      description: Осуществляет выход пользователя из закрытой части приложения.
+
+      responses:
+        "200":
+          description: Пользовательский сеанс (сессия) завершен.
+
+        "400":
+          description: Токен не прошел проверку.
+
+        "401":
+          description: Ошибка авторизации. Ресурс доступен только авторизованным клиентам.
+
+  /users/check-auth:
+    get:
+      tags:
+        - users
+      summary: Проверка авторизации пользователя.
+      description: Осуществляет проверку признака "пользователь авторизован или нет".
+
+      responses:
+        "200":
+          description: Пользователь авторизован.
+
+        "401":
+          description: Пользователь не авторизован.
+
+  /rent-offers/premium/{cityName}:
+    post:
+      tags:
+        - rent-offers
+      summary: Получение списка премиальных предложений для города.
+      description: Возвращает список премиальных предложений для указанного города.
+
+      parameters:
+        - name: cityName
+          in: path
+          schema:
+            type: string
+          required: true
+
+      responses:
+        "200":
+          description: Получен список премиальных предложений для города.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/rentOfferListElement'
+
+        "404":
+          description: Премиальные предложения не были найдены или указанный город не существует.
+
+  /users/favorite/{userId}:
+    get:
+      tags:
+        - users
+      summary: Получение списка избранных предложений.
+      description: Позволяет авторизованному пользователю получить список его избранных предложений.
+
+      parameters:
+        - name: userId
+          in: path
+          schema:
+            type: string
+          required: true
+
+      responses:
+        "200":
+          description: Получен список избранных предложений пользователя.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/rentOfferListElement'
+
+        "401":
+          description: Ошибка авторизации. Ресурс доступен только авторизованным клиентам.
+
+    delete:
+      tags:
+        - users
+      summary: Удаление предложения из избранного.
+      description: Позволяет авторизованному пользователю удалить предложение из списка его избранных предложений.
+
+      parameters:
+        - name: userId
+          in: path
+          schema:
+            type: string
+          required: true
+
+      requestBody:
+        description: Идентификатор предложения, которое требуется удалить из избранного.
+        content:
+          application/json:
+            schema:
+              type: string
+        required: true
+
+      responses:
+        "200":
+          description: Предложение успешно удалено из избранных.
+
+        "401":
+          description: Ошибка авторизации. Ресурс доступен только авторизованным клиентам.
+
+    post:
+      tags:
+        - users
+      summary: Добавление предложения в избранное.
+      description: Позволяет авторизованному пользователю добавить предложение в список его избранных предложений.
+
+      parameters:
+        - name: userId
+          in: path
+          schema:
+            type: string
+          required: true
+
+      requestBody:
+        description: Идентификатор предложения, которое требуется добавить в избранное.
+        content:
+          application/json:
+            schema:
+              type: string
+        required: true
+
+      responses:
+        "201":
+          description: Предложение успешно добавлено в избранное.
+
+        "401":
+          description: Ошибка авторизации. Ресурс доступен только авторизованным клиентам.
+
+components:
+  schemas:
+    createUser:
+      type: object
+
+      properties:
+        name:
+          type: string
+
+        email:
+          type: string
+
+        avatar:
+          type: string
+
+        password:
+          type: string
+
+    createdUser:
+      type: object
+
+      properties:
+        name:
+          type: string
+
+        email:
+          type: string
+
+        avatar:
+          type: string
+
+        userType:
+          type: string
+
+    rentOfferListElement:
+      type: object
+
+      properties:
+        rentCost:
+          type: integer
+
+        title:
+          type: string
+
+        housingType:
+          type: string
+
+        isFavorite:
+          type: boolean
+
+        publicationDate:
+          type: string
+
+        cityName:
+          type: string
+
+        preview:
+          type: string
+
+        isPremium:
+          type: boolean
+
+        rating:
+          type: number
+
+        commentsCount:
+          type: integer
+
+    rentOffer:
+      type: object
+
+      properties:
+        title:
+          type: string
+
+        description:
+          type: string
+
+        publicationDate:
+          type: string
+
+        cityName:
+          type: string
+
+        preview:
+          type: string
+
+        photos:
+          type: array
+          items:
+            type: string
+
+        isPremium:
+          type: boolean
+
+        isFavorite:
+          type: boolean
+
+        rating:
+          type: number
+
+        housingType:
+          type: string
+
+        roomsCount:
+          type: integer
+
+        visitorsCount:
+          type: integer
+
+        rentCost:
+          type: integer
+
+        amenities:
+          type: array
+          items:
+            type: string
+
+        authorLink:
+          type: string
+
+        commentsCount:
+          type: integer
+
+        cityLatitude:
+          type: number
+
+        cityLongitude:
+          type: number
+
+    createRentOfferComment:
+      type: object
+
+      properties:
+        text:
+          type: string
+
+        rating:
+          type: integer
+
+        authorLink:
+          type: string
+
+    createdRentOfferComment:
+      type: object
+
+      properties:
+        text:
+          type: string
+
+        rating:
+          type: integer
+
+        authorLink:
+          type: string
+
+        publicationDate:
+          type: string

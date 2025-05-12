@@ -6,4 +6,5 @@ export type User = {
   avatar?: string; // link, GUID or base64 string; with default value
   // password?: string; // length 6..12
   userType: UserType;
+  favoriteOfferIds: string[];
 }

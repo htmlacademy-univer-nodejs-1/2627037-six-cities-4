@@ -7,8 +7,10 @@ import {
   IsDateString,
   IsEnum,
   IsInt,
+  IsMongoId,
   IsString,
-  Max, MaxLength,
+  Max,
+  MaxLength,
   Min,
   MinLength
 } from 'class-validator';
@@ -63,5 +65,6 @@ export class CreateRentOfferDto {
   public amenities: Amenity[];
 
   @IsString({ message: CreateRentOfferValidationMessage.userId.invalidFormat })
+  @IsMongoId({ message: CreateRentOfferValidationMessage.userId.invalidId })
   public userId: string;
 }

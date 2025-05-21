@@ -3,8 +3,10 @@ import { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import {
   BaseController,
+  DocumentExistsMiddleware,
   HttpError,
   HttpMethod,
+  UploadFileMiddleware,
   ValidateDtoMiddleware,
   ValidateObjectIdMiddleware
 } from '../../libs/rest/index.js';
@@ -56,7 +58,10 @@ export class UserController extends BaseController {
       path: '/check-auth',
       method: HttpMethod.Get,
       handler: this.checkAuth,
-      middlewares: [new ValidateObjectIdMiddleware('userId')],
+      middlewares: [
+        new ValidateObjectIdMiddleware('userId'),
+        new DocumentExistsMiddleware(this.userService, 'User', 'userId'),
+      ],
     });
     this.addRoute({
       path: '/favorite/:userId',
@@ -64,7 +69,9 @@ export class UserController extends BaseController {
       handler: this.saveToFavorite,
       middlewares: [
         new ValidateObjectIdMiddleware('offerId'),
-        new ValidateObjectIdMiddleware('userId')
+        new ValidateObjectIdMiddleware('userId'),
+        new DocumentExistsMiddleware(this.rentOfferService, 'RentOffer', 'offerId'),
+        new DocumentExistsMiddleware(this.userService, 'User', 'userId'),
       ],
     });
     this.addRoute({
@@ -73,14 +80,28 @@ export class UserController extends BaseController {
       handler: this.deleteFromFavorite,
       middlewares: [
         new ValidateObjectIdMiddleware('offerId'),
-        new ValidateObjectIdMiddleware('userId')
+        new ValidateObjectIdMiddleware('userId'),
+        new DocumentExistsMiddleware(this.rentOfferService, 'RentOffer', 'offerId'),
+        new DocumentExistsMiddleware(this.userService, 'User', 'userId'),
       ],
     });
     this.addRoute({
       path: '/favorite/:userId',
       method: HttpMethod.Post,
       handler: this.getFavorites,
-      middlewares: [new ValidateObjectIdMiddleware('userId')],
+      middlewares: [
+        new ValidateObjectIdMiddleware('userId'),
+        new DocumentExistsMiddleware(this.userService, 'User', 'userId'),
+      ],
+    });
+    this.addRoute({
+      path: '/:userId/avatar',
+      method: HttpMethod.Post,
+      handler: this.uploadAvatar,
+      middlewares: [
+        new ValidateObjectIdMiddleware('userId'),
+        new UploadFileMiddleware(this.configService.get('UPLOAD_DIRECTORY'), 'avatar'),
+      ]
     });
   }
 
@@ -314,5 +335,11 @@ export class UserController extends BaseController {
     const offerIds = await this.userService.getFavoriteOfferIds(params.userId);
     const result = await this.rentOfferService.findByIds(offerIds);
     this.ok(res, fillDTO(RentOfferListElementRdo, result));
+  }
+
+  public async uploadAvatar(req: Request, res: Response) {
+    this.created(res, {
+      filepath: req.file?.path
+    });
   }
 }

@@ -65,4 +65,9 @@ export class DefaultUserService implements UserService {
     const result = await this.userModel.findOne({ _id: userId }).exec();
     return result ? result.favoriteOfferIds : [];
   }
+
+  public async exists(documentId: string): Promise<boolean> {
+    return (await this.userModel
+      .exists({ _id: documentId })) !== null;
+  }
 }

@@ -8,3 +8,4 @@ export * from './city-coordinates.type.js';
 export * from './city-name.enum.js';
 export * from './comment.type.js';
 export * from './user-type.enum.js';
+export * from './document-exists.interface.js';

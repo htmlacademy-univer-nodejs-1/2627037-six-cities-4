@@ -3,6 +3,7 @@ import { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import {
   BaseController,
+  DocumentExistsMiddleware,
   HttpError,
   HttpMethod,
   ValidateDtoMiddleware,
@@ -40,14 +41,18 @@ export class RentOfferController extends BaseController {
       handler: this.updateRentOffer,
       middlewares: [
         new ValidateDtoMiddleware(CreateRentOfferDto),
-        new ValidateObjectIdMiddleware('rentOfferId')
+        new ValidateObjectIdMiddleware('rentOfferId'),
+        new DocumentExistsMiddleware(this.rentOfferService, 'RentOffer', 'rentOfferId'),
       ],
     });
     this.addRoute({
       path: '/',
       method: HttpMethod.Delete,
       handler: this.deleteRentOffer,
-      middlewares: [new ValidateObjectIdMiddleware('rentOfferId')],
+      middlewares: [
+        new ValidateObjectIdMiddleware('rentOfferId'),
+        new DocumentExistsMiddleware(this.rentOfferService, 'RentOffer', 'rentOfferId'),
+      ],
     });
     this.addRoute({
       path: '/get-list',
@@ -58,7 +63,10 @@ export class RentOfferController extends BaseController {
       path: '/info/:rentOfferId',
       method: HttpMethod.Get,
       handler: this.getRentOfferInfo,
-      middlewares: [new ValidateObjectIdMiddleware('rentOfferId')],
+      middlewares: [
+        new ValidateObjectIdMiddleware('rentOfferId'),
+        new DocumentExistsMiddleware(this.rentOfferService, 'RentOffer', 'rentOfferId'),
+      ],
     });
     this.addRoute({
       path: '/premium/:cityName',

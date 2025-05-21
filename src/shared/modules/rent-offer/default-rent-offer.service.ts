@@ -58,4 +58,9 @@ export class DefaultRentOfferService implements RentOfferService {
       b.postDate.getMilliseconds() - a.postDate.getMilliseconds()
     );
   }
+
+  public async exists(documentId: string): Promise<boolean> {
+    return (await this.offerModel
+      .exists({ _id: documentId })) !== null;
+  }
 }

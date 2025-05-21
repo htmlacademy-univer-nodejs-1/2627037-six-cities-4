@@ -92,13 +92,13 @@ paths:
       summary: Удаление предложения и всех связанных с ним комментариев.
       description: Позволяет авторизованному пользователю удалить предложение и все связанные с ним комментарии.
 
-      requestBody:
-        description: Идентификатор предложения, которое требуется удалить.
-        content:
-          application/json:
-            schema:
-              type: string
-        required: true
+      parameters:
+        - name: rentOfferId
+          description: Идентификатор предложения, которое требуется удалить.
+          in: path
+          schema:
+            type: string
+          required: true
 
       responses:
         "200":
@@ -113,7 +113,7 @@ paths:
         "404":
           description: Указанное предложение не существует.
 
-  /rent-offers/get-list?count=60:
+  /rent-offers/get-list:
     get:
       tags:
         - rent-offers
@@ -249,7 +249,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/createdUser'
+                $ref: '#/components/schemas/userView'
 
         "400":
           description: Валидация данных не была пройдена. Пользователь не был создан.
@@ -266,6 +266,14 @@ paths:
         - users
       summary: Авторизация пользователя.
       description: Авторизует пользователя на основе логина (email) и пароля.
+
+      requestBody:
+        description: Данные авторизации пользователя.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/userCredentials'
+        required: true
 
       responses:
         "200":
@@ -308,12 +316,31 @@ paths:
       summary: Проверка авторизации пользователя.
       description: Осуществляет проверку признака "пользователь авторизован или нет".
 
+      parameters:
+        - name: token
+          in: query
+          schema:
+            type: string
+          required: true
+        - name: userId
+          in: query
+          schema:
+            type: string
+          required: true
+
       responses:
         "200":
           description: Пользователь авторизован.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/userView'
 
         "401":
           description: Пользователь не авторизован.
+
+        "404":
+          description: Пользователь не существует.
 
   /rent-offers/premium/{cityName}:
     post:
@@ -328,6 +355,11 @@ paths:
           schema:
             type: string
           required: true
+        - name: count
+          in: query
+          schema:
+            type: integer
+          required: false
 
       responses:
         "200":
@@ -350,11 +382,17 @@ paths:
       description: Позволяет авторизованному пользователю получить список его избранных предложений.
 
       parameters:
+        - name: token
+          in: query
+          schema:
+            type: string
+          required: true
         - name: userId
           in: path
           schema:
             type: string
           required: true
+
 
       responses:
         "200":
@@ -369,6 +407,9 @@ paths:
         "401":
           description: Ошибка авторизации. Ресурс доступен только авторизованным клиентам.
 
+        "404":
+          description: Пользовтель не существует.
+
     delete:
       tags:
         - users
@@ -376,19 +417,22 @@ paths:
       description: Позволяет авторизованному пользователю удалить предложение из списка его избранных предложений.
 
       parameters:
+        - name: token
+          in: query
+          schema:
+            type: string
+          required: true
         - name: userId
           in: path
           schema:
             type: string
           required: true
-
-      requestBody:
-        description: Идентификатор предложения, которое требуется удалить из избранного.
-        content:
-          application/json:
-            schema:
-              type: string
-        required: true
+        - name: offerId
+          description: Идентификатор предложения, которое требуется удалить из избранного.
+          in: query
+          schema:
+            type: string
+          required: true
 
       responses:
         "200":
@@ -397,6 +441,9 @@ paths:
         "401":
           description: Ошибка авторизации. Ресурс доступен только авторизованным клиентам.
 
+        "404":
+          description: Пользовтель или предложение не существует.
+
     post:
       tags:
         - users
@@ -404,19 +451,22 @@ paths:
       description: Позволяет авторизованному пользователю добавить предложение в список его избранных предложений.
 
       parameters:
+        - name: token
+          in: query
+          schema:
+            type: string
+          required: true
         - name: userId
           in: path
           schema:
             type: string
           required: true
-
-      requestBody:
-        description: Идентификатор предложения, которое требуется добавить в избранное.
-        content:
-          application/json:
-            schema:
-              type: string
-        required: true
+        - name: offerId
+          description: Идентификатор предложения, которое требуется добавить в избранное.
+          in: query
+          schema:
+            type: string
+          required: true
 
       responses:
         "201":
@@ -424,6 +474,9 @@ paths:
 
         "401":
           description: Ошибка авторизации. Ресурс доступен только авторизованным клиентам.
+
+        "404":
+          description: Пользовтель или предложение не существует.
 
 components:
   schemas:
@@ -443,7 +496,7 @@ components:
         password:
           type: string
 
-    createdUser:
+    userView:
       type: object
 
       properties:
@@ -582,4 +635,14 @@ components:
           type: string
 
         publicationDate:
+          type: string
+
+    userCredentials:
+      type: object
+
+      properties:
+        email:
+          type: string
+
+        password:
           type: string

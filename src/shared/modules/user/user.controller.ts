@@ -1,7 +1,13 @@
 import { inject, injectable } from 'inversify';
-import {Request, Response} from 'express';
+import { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
-import { BaseController, HttpError, HttpMethod } from '../../libs/rest/index.js';
+import {
+  BaseController,
+  HttpError,
+  HttpMethod,
+  ValidateDtoMiddleware,
+  ValidateObjectIdMiddleware
+} from '../../libs/rest/index.js';
 import { Logger } from '../../libs/logger/index.js';
 import { Component } from '../../types/index.js';
 import { CreateUserRequest } from './request/create-user-request.type.js';
@@ -12,8 +18,10 @@ import { CreatedUserRdo } from './rdo/created-user.rdo.js';
 import { LoginUserRequest } from './request/login-user-request.type.js';
 import { RentOfferService } from '../rent-offer/index.js';
 import { ParamCheckAuthorization } from './type/param-check-authorization.type.js';
-import { RentOfferListElementRdo } from '../rent-offer/rdo/rent-offer-list-element.rdo.js';
+import { RentOfferListElementRdo } from '../rent-offer/index.js';
 import { ParamUserFavorite} from './type/param-user-favorite.type.js';
+import { CreateUserDto } from './dto/create-user.dto.js';
+import { LogoutUserDto } from './dto/logout-user.dto.js';
 
 @injectable()
 export class UserController extends BaseController {
@@ -26,13 +34,54 @@ export class UserController extends BaseController {
     super(logger);
     this.logger.info('Register routes for UserController…');
 
-    this.addRoute({ path: '/create', method: HttpMethod.Post, handler: this.create });
-    this.addRoute({ path: '/login', method: HttpMethod.Post, handler: this.login });
-    this.addRoute({ path: '/logout', method: HttpMethod.Post, handler: this.logout });
-    this.addRoute({ path: '/check-auth', method: HttpMethod.Get, handler: this.checkAuth });
-    this.addRoute({ path: '/favorite/:userId', method: HttpMethod.Get, handler: this.saveToFavorite });
-    this.addRoute({ path: '/favorite/:userId', method: HttpMethod.Delete, handler: this.deleteFromFavorite });
-    this.addRoute({ path: '/favorite/:userId', method: HttpMethod.Post, handler: this.getFavorites });
+    this.addRoute({
+      path: '/create',
+      method: HttpMethod.Post,
+      handler: this.create,
+      middlewares: [new ValidateDtoMiddleware(CreateUserDto)],
+    });
+    this.addRoute({
+      path: '/login',
+      method: HttpMethod.Post,
+      handler: this.login,
+      middlewares: [new ValidateDtoMiddleware(CreateUserDto), new ValidateObjectIdMiddleware('email')],
+    });
+    this.addRoute({
+      path: '/logout',
+      method: HttpMethod.Post,
+      handler: this.logout,
+      middlewares: [new ValidateDtoMiddleware(LogoutUserDto)],
+    });
+    this.addRoute({
+      path: '/check-auth',
+      method: HttpMethod.Get,
+      handler: this.checkAuth,
+      middlewares: [new ValidateObjectIdMiddleware('userId')],
+    });
+    this.addRoute({
+      path: '/favorite/:userId',
+      method: HttpMethod.Get,
+      handler: this.saveToFavorite,
+      middlewares: [
+        new ValidateObjectIdMiddleware('offerId'),
+        new ValidateObjectIdMiddleware('userId')
+      ],
+    });
+    this.addRoute({
+      path: '/favorite/:userId',
+      method: HttpMethod.Delete,
+      handler: this.deleteFromFavorite,
+      middlewares: [
+        new ValidateObjectIdMiddleware('offerId'),
+        new ValidateObjectIdMiddleware('userId')
+      ],
+    });
+    this.addRoute({
+      path: '/favorite/:userId',
+      method: HttpMethod.Post,
+      handler: this.getFavorites,
+      middlewares: [new ValidateObjectIdMiddleware('userId')],
+    });
   }
 
   public async create(
@@ -130,7 +179,7 @@ export class UserController extends BaseController {
   }
 
   public async checkAuth(
-  // { params }: Request<ParamCheckAuthorization, unknown, unknown, unknown>,
+  // { params }: Request<ParamCheckAuthorization>,
   // res: Response,
   ): Promise<void> {
     // const isAuthorized = validate(params.token);
@@ -167,7 +216,7 @@ export class UserController extends BaseController {
   }
 
   public async saveToFavorite(
-    { params }: Request<ParamUserFavorite, unknown, unknown, unknown>,
+    { params }: Request<ParamUserFavorite>,
     res: Response,
   ): Promise<void> {
     // const isAuthorized = validate(params.token);
@@ -203,7 +252,7 @@ export class UserController extends BaseController {
   }
 
   public async deleteFromFavorite(
-    { params }: Request<ParamUserFavorite, unknown, unknown, unknown>,
+    { params }: Request<ParamUserFavorite>,
     res: Response,
   ): Promise<void> {
     // const isAuthorized = validate(params.token);
@@ -239,7 +288,7 @@ export class UserController extends BaseController {
   }
 
   public async getFavorites(
-    { params }: Request<ParamCheckAuthorization, unknown, unknown, unknown>,
+    { params }: Request<ParamCheckAuthorization>,
     res: Response,
   ): Promise<void> {
     // const isAuthorized = validate(params.token);

@@ -1,6 +1,6 @@
 import { Expose } from 'class-transformer';
 
-export class CreatedUserRdo {
+export class ViewUserRdo {
   @Expose()
   public name: string;
 
@@ -8,7 +8,7 @@ export class CreatedUserRdo {
   public email: string;
 
   @Expose()
-  public avatar: string;
+  public avatarPath: string;
 
   @Expose()
   public userType: string;

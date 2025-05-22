@@ -6,6 +6,7 @@ import { Logger } from '../../logger/index.js';
 import { Component } from '../../../types/index.js';
 import { createErrorObject } from '../../../helpers/index.js';
 import { HttpError } from '../errors/index.js';
+import { ValidationError } from '../errors/validation-error.js';
 
 @injectable()
 export class AppExceptionFilter implements ExceptionFilter {
@@ -22,6 +23,13 @@ export class AppExceptionFilter implements ExceptionFilter {
       .json(createErrorObject(error.message));
   }
 
+  private handleValidationError(error: ValidationError, _req: Request, res: Response, _next: NextFunction) {
+    this.logger.error(`[ValidationError]: ${error.property} = ${error.value}\n\t- ${error.messages.join('\n\t- ')}`, error);
+    res
+      .status(StatusCodes.BAD_REQUEST)
+      .json(createErrorObject(error.message));
+  }
+
   private handleOtherError(error: Error, _req: Request, res: Response, _next: NextFunction) {
     this.logger.error(error.message, error);
     res
@@ -32,6 +40,9 @@ export class AppExceptionFilter implements ExceptionFilter {
   public catch(error: Error | HttpError, req: Request, res: Response, next: NextFunction): void {
     if (error instanceof HttpError) {
       return this.handleHttpError(error, req, res, next);
+    }
+    if (error instanceof ValidationError) {
+      return this.handleValidationError(error, req, res, next);
     }
 
     this.handleOtherError(error, req, res, next);

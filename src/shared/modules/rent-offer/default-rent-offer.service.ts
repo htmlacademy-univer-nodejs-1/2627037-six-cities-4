@@ -4,8 +4,10 @@ import { CityName, Component } from '../../types/index.js';
 import { Logger } from '../../libs/logger/index.js';
 import { DocumentType, types } from '@typegoose/typegoose';
 import { RentOfferEntity } from './rent-offer.entity.js';
-import { CreateRentOfferDto } from './dto/create-rent-offer.dto.js';
+import { RentOfferDto } from './dto/rent-offer.dto.js';
 import { MAX_ENTRY_COUNT, MAX_PREMIUM_ENTRY_COUNT } from './rent-offer-service.constant.js';
+import { SortType } from '../../types/sort-type.enum.js';
+import { getCityCoordinates } from '../../helpers/domain.js';
 
 @injectable()
 export class DefaultRentOfferService implements RentOfferService {
@@ -14,49 +16,85 @@ export class DefaultRentOfferService implements RentOfferService {
     @inject(Component.RentOfferModel) private readonly offerModel: types.ModelType<RentOfferEntity>
   ) {}
 
-  public async create(dto: CreateRentOfferDto): Promise<DocumentType<RentOfferEntity>> {
-    const result = await this.offerModel.create(dto);
+  public async create(dto: RentOfferDto): Promise<DocumentType<RentOfferEntity>> {
+    const cityCoordinates = getCityCoordinates(dto.cityName);
+    const result = await this.offerModel.create({
+      ...dto,
+      cityCoordinates,
+      rating: 1,
+      commentsCount: 0,
+      favoriteUserIds: []
+    });
     this.logger.info(`New offer created: ${dto.title}`);
+    await result.populate('userId');
 
     return result;
   }
 
-  public async update(dto: CreateRentOfferDto, rentOfferId: string): Promise<DocumentType<RentOfferEntity>> {
-    const result = { _id: rentOfferId, ... dto };
-    await this.offerModel.replaceOne({ _id: rentOfferId }, result).exec();
+  public async updateById(dto: RentOfferDto, rentOfferId: string): Promise<DocumentType<RentOfferEntity>> {
+    const replaceWith = { _id: rentOfferId, ...dto };
+    await this.offerModel.replaceOne({ _id: rentOfferId }, replaceWith).exec();
 
-    return (await this.findById(rentOfferId))!;
+    const result = await this.findById(rentOfferId);
+    return result!;
   }
 
-  public async delete(rentOfferId: string): Promise<void> {
-    await this.offerModel.deleteOne({ _id: rentOfferId });
+  public async deleteById(rentOfferId: string): Promise<DocumentType<RentOfferEntity> | null> {
+    return this.offerModel
+      .findByIdAndDelete(rentOfferId)
+      .exec();
   }
 
   public async getList(maxEntryCount: number | null): Promise<DocumentType<RentOfferEntity>[]> {
     const entryCount = maxEntryCount ?? MAX_ENTRY_COUNT;
-    const result = await this.offerModel.find().limit(entryCount).exec();
-    return result.sort((a: RentOfferEntity, b: RentOfferEntity) =>
-      b.postDate.getMilliseconds() - a.postDate.getMilliseconds()
-    );
+    return await this.offerModel
+      .find()
+      .limit(entryCount)
+      .sort({ createdAt: SortType.Down })
+      .populate('userId')
+      .exec();
   }
 
-  public async getPremiumRentOffers(cityName: CityName, maxEntryCount: number | null): Promise<RentOfferEntity[]> {
+  public async getPremiumRentOffers(cityName: CityName, maxEntryCount: number | null): Promise<DocumentType<RentOfferEntity>[]> {
     const entryCount = maxEntryCount ?? MAX_PREMIUM_ENTRY_COUNT;
-    const result = await this.offerModel.find({ cityName: cityName }).limit(entryCount);
-    return result.sort((a: RentOfferEntity, b: RentOfferEntity) =>
-      b.postDate.getMilliseconds() - a.postDate.getMilliseconds()
-    );
+    return await this.offerModel
+      .find({ isPremium: true, cityName: cityName })
+      .limit(entryCount)
+      .sort({ createdAt: SortType.Down })
+      .populate('userId')
+      .exec();
   }
 
   public async findById(rentOfferId: string): Promise<DocumentType<RentOfferEntity> | null> {
-    return this.offerModel.findById(rentOfferId).exec();
+    return this.offerModel.findById(rentOfferId).populate('userId').exec();
   }
 
   public async findByIds(rentOfferIds: string[]): Promise<DocumentType<RentOfferEntity>[] | null> {
-    const result = await this.offerModel.find({ id: { $in: rentOfferIds } }).exec();
-    return result.sort((a: RentOfferEntity, b: RentOfferEntity) =>
-      b.postDate.getMilliseconds() - a.postDate.getMilliseconds()
-    );
+    return await this.offerModel
+      .find({ id: { $in: rentOfferIds } })
+      .sort({ createdAt: SortType.Down })
+      .exec();
+  }
+
+  public async addFavoriteRentOffer(userId: string, offerId: string): Promise<void> {
+    await this.offerModel.findByIdAndUpdate(
+      offerId,
+      { $addToSet: { favoriteUserIds: userId } }
+    ).exec();
+  }
+
+  public async removeFavoriteRentOffer(userId: string, offerId: string): Promise<void> {
+    await this.offerModel.findByIdAndUpdate(
+      offerId,
+      { $pull: { favoriteUserIds: userId } }
+    ).exec();
+  }
+
+  public async getFavoriteRentOffers(userId: string): Promise<DocumentType<RentOfferEntity>[]> {
+    return await this.offerModel
+      .find({ favoriteUserIds: userId })
+      .populate('userId')
+      .exec();
   }
 
   public async exists(documentId: string): Promise<boolean> {

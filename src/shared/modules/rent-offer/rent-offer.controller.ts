@@ -123,7 +123,7 @@ export class RentOfferController extends BaseController {
     const { rentOfferId } = params;
     const foundOffer = await this.rentOfferService.findById(rentOfferId);
 
-    if (foundOffer?.userId !== tokenPayload.id) {
+    if (foundOffer?.userId.id !== tokenPayload.id) {
       throw new HttpError(
         StatusCodes.FORBIDDEN,
         `Access denied. Unable to update offer ${rentOfferId} which user ${tokenPayload.id} does not have update access.`,

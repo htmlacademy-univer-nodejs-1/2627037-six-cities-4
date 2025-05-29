@@ -8,7 +8,9 @@ export interface RentOfferService {
   update(dto: CreateRentOfferDto, rentOfferId: string): Promise<DocumentType<RentOfferEntity>>;
   delete(rentOfferId: string): Promise<void>;
   getList(maxEntryCount: number): Promise<RentOfferEntity[]>;
+  getListWithDefaultPagination(): Promise<RentOfferEntity[]>;
   getPremiumRentOffers(cityName: CityName, maxEntryCount: number): Promise<RentOfferEntity[]>;
+  getPremiumRentOffersWithDefaultPagination(cityName: CityName): Promise<RentOfferEntity[]>;
   findById(offerId: string): Promise<DocumentType<RentOfferEntity> | null>;
   findByIds(offerIds: string[]): Promise<DocumentType<RentOfferEntity>[] | null>;
 }

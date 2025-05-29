@@ -11,8 +11,8 @@ export interface RentOfferService extends DocumentExists {
   getPremiumRentOffers(cityName: CityName, maxEntryCount: number | null): Promise<DocumentType<RentOfferEntity>[]>;
   findById(rentOfferId: string): Promise<DocumentType<RentOfferEntity> | null>;
   findByIds(rentOfferIds: string[]): Promise<DocumentType<RentOfferEntity>[] | null>;
-  addFavoriteRentOffer(userId: string, offerId: string): Promise<void>;
-  removeFavoriteRentOffer(userId: string, offerId: string): Promise<void>;
+  addFavoriteRentOffer(userId: string, offerId: string): Promise<DocumentType<RentOfferEntity> | null>;
+  removeFavoriteRentOffer(userId: string, offerId: string): Promise<DocumentType<RentOfferEntity> | null>;
   getFavoriteRentOffers(userId: string): Promise<DocumentType<RentOfferEntity>[]>;
   exists(documentId: string): Promise<boolean>;
 }

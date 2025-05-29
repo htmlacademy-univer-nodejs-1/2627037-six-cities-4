@@ -62,9 +62,9 @@ export class RentOfferController extends BaseController {
       ],
     });
     this.addRoute({
-      path: '/get-list',
+      path: '/index',
       method: HttpMethod.Get,
-      handler: this.getRentOfferList,
+      handler: this.indexRentOffers,
     });
     this.addRoute({
       path: '/info/:rentOfferId',
@@ -117,10 +117,20 @@ export class RentOfferController extends BaseController {
   }
 
   public async updateRentOffer(
-    { body, params }: Request<ParamRentOfferId, unknown, RentOfferDto>,
+    { body, params, tokenPayload }: Request<ParamRentOfferId, unknown, RentOfferDto>,
     res: Response,
   ): Promise<void> {
     const { rentOfferId } = params;
+    const foundOffer = await this.rentOfferService.findById(rentOfferId);
+
+    if (foundOffer?.userId.id !== tokenPayload.id) {
+      throw new HttpError(
+        StatusCodes.FORBIDDEN,
+        `Access denied. Unable to update offer ${rentOfferId} which user ${tokenPayload.id} does not have update access.`,
+        'RentOfferController',
+      );
+    }
+
     const updatedOffer = await this.rentOfferService.updateById(body, rentOfferId);
     this.ok(res, fillDTO(RentOfferRdo, updatedOffer));
   }
@@ -136,15 +146,13 @@ export class RentOfferController extends BaseController {
     this.noContent(res, offer);
   }
 
-  public async getRentOfferList(
+  public async indexRentOffers(
     { query }: Request,
     res: Response,
   ): Promise<void> {
     const { count } = query;
-    this.logger.info(`Executing /rent-offer/get-list request with count=${count}`);
     const result = await this.rentOfferService.getList(count
       ? Number.parseInt(count as string, 10) : null);
-    this.logger.info(`Sending rent offer list: ${result.map(offer => offer.id).join(', ')}`);
     this.ok(res, fillDTO(RentOfferListElementRdo, result));
   }
 
@@ -162,6 +170,15 @@ export class RentOfferController extends BaseController {
     res: Response,
   ): Promise<void> {
     const { cityName, count } = query;
+
+    if (! cityName || !(cityName as string in CityName)) {
+      throw new HttpError(
+        StatusCodes.NOT_FOUND,
+        `City with name ${cityName} not found.`,
+        'RentOfferController',
+      );
+    }
+
     const result = await this.rentOfferService.getPremiumRentOffers(cityName as CityName, count
       ? Number.parseInt(count as string, 10) : null);
     this.ok(res, fillDTO(RentOfferListElementRdo, result));
@@ -172,25 +189,18 @@ export class RentOfferController extends BaseController {
     res: Response,
   ): Promise<void> {
     const existsUser = await this.userService.findById(tokenPayload.id);
-    const existsOffer = await this.rentOfferService.findById(params.rentOfferId);
 
     if (! existsUser) {
       throw new HttpError(
-        StatusCodes.UNAUTHORIZED,
+        StatusCodes.NOT_FOUND,
         `User with id ${tokenPayload.id} not found.`,
-        'UserController',
-      );
-    }
-    if (! existsOffer) {
-      throw new HttpError(
-        StatusCodes.UNAUTHORIZED,
-        `Offer with id ${params.rentOfferId} not found.`,
-        'UserController',
+        'RentOfferController',
       );
     }
 
-    await this.rentOfferService.addFavoriteRentOffer(tokenPayload.id, params.rentOfferId);
-    this.ok(res, null);
+    const result = await this.rentOfferService.addFavoriteRentOffer(
+      tokenPayload.id, params.rentOfferId);
+    this.created(res, fillDTO(RentOfferRdo, result));
   }
 
   public async deleteFromFavorite(
@@ -198,25 +208,18 @@ export class RentOfferController extends BaseController {
     res: Response,
   ): Promise<void> {
     const existsUser = await this.userService.findById(tokenPayload.id);
-    const existsOffer = await this.rentOfferService.findById(params.rentOfferId);
 
     if (! existsUser) {
       throw new HttpError(
         StatusCodes.NOT_FOUND,
         `User with id ${tokenPayload.id} not found.`,
-        'UserController',
-      );
-    }
-    if (! existsOffer) {
-      throw new HttpError(
-        StatusCodes.NOT_FOUND,
-        `Offer with id ${params.rentOfferId} not found.`,
-        'UserController',
+        'RentOfferController',
       );
     }
 
-    await this.rentOfferService.removeFavoriteRentOffer(tokenPayload.id, params.rentOfferId);
-    this.created(res, null);
+    const result = await this.rentOfferService.removeFavoriteRentOffer(
+      tokenPayload.id, params.rentOfferId);
+    this.ok(res, fillDTO(RentOfferRdo, result));
   }
 
   public async getFavorites(
@@ -229,7 +232,7 @@ export class RentOfferController extends BaseController {
       throw new HttpError(
         StatusCodes.NOT_FOUND,
         `User with id ${tokenPayload.id} not found.`,
-        'UserController',
+        'RentOfferController',
       );
     }
 

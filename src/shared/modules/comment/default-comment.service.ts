@@ -25,7 +25,7 @@ export class DefaultCommentService implements CommentService {
 
     if (rentOfferComments.length > 0) {
       const ratingSum = rentOfferComments
-        .map(comment => comment.rating)
+        .map((comment) => comment.rating)
         .reduce((currSum, val) => currSum + val, 0);
       const avgRating = ratingSum / rentOfferComments.length;
       await this.rentOfferModel.findByIdAndUpdate(dto.offerId, {

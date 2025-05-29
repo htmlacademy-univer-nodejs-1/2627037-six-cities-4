@@ -2,6 +2,9 @@ import { Expose } from 'class-transformer';
 
 export class RentOfferListElementRdo {
   @Expose()
+  public id: number;
+
+  @Expose()
   public rentCost: number;
 
   @Expose()

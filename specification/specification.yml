@@ -113,7 +113,7 @@ paths:
         "404":
           description: Указанное предложение не существует.
 
-  /rent-offers/get-list:
+  /rent-offers/index:
     get:
       tags:
         - rent-offers
@@ -159,6 +159,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/rentOffer'
 
+        "400":
+          description: Невалидный идентификатор предложения.
+
         "404":
           description: Указанное предложение не существует.
 
@@ -186,10 +189,13 @@ paths:
                 items:
                   $ref: '#/components/schemas/viewComment'
 
+        "400":
+          description: Невалидный идентификатор предложения.
+
         "404":
           description: Указанное предложение не существует.
 
-  /comments/create/{rentOfferId}:
+  /comments/create:
     post:
       tags:
         - comments
@@ -215,7 +221,7 @@ paths:
         "400":
           description: Валидация данных не была пройдена. Комментарий не был добавлен.
 
-        "403":
+        "401":
           description: Ошибка авторизации. Добавлять комментарии могут только авторизованные клиенты.
 
         "404":
@@ -274,7 +280,7 @@ paths:
           content:
             application/json:
               schema:
-                type: string
+                $ref: '#/components/schemas/authorizedUser'
 
         "400":
           description: Неверный логин (email) или пароль пользователя.
@@ -295,6 +301,10 @@ paths:
       responses:
         "200":
           description: Пользовательский сеанс (сессия) завершен.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/authorizedUser'
 
         "400":
           description: Токен не прошел проверку.
@@ -327,7 +337,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/userView'
+                $ref: '#/components/schemas/authorizedUser'
 
         "401":
           description: Пользователь не авторизован.
@@ -335,8 +345,29 @@ paths:
         "404":
           description: Пользователь не существует.
 
-  /rent-offers/premium/{cityName}:
+  /users/avatar:
     post:
+      tags:
+        - users
+      summary: Отправка изображения пользователя.
+      description: Осуществляет отправку изображения пользователя на сервер.
+
+      responses:
+        "201":
+          description: Изображение успешно отправлено.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/userAvatar'
+
+        "400":
+          description: Ожидается файл изображения на входе.
+
+        "401":
+          description: Ошибка авторизации. Ресурс доступен только авторизованным клиентам.
+
+  /rent-offers/premium:
+    get:
       tags:
         - rent-offers
       summary: Получение списка премиальных предложений для города.
@@ -365,27 +396,14 @@ paths:
                   $ref: '#/components/schemas/rentOfferListElement'
 
         "404":
-          description: Премиальные предложения не были найдены или указанный город не существует.
+          description: Указанный город не существует.
 
-  /users/favorite/{userId}:
+  /rent-offers/favorite/{rentOfferId}:
     get:
       tags:
-        - users
+        - rent-offers
       summary: Получение списка избранных предложений.
       description: Позволяет авторизованному пользователю получить список его избранных предложений.
-
-      parameters:
-        - name: token
-          in: query
-          schema:
-            type: string
-          required: true
-        - name: userId
-          in: path
-          schema:
-            type: string
-          required: true
-
 
       responses:
         "200":
@@ -405,22 +423,12 @@ paths:
 
     delete:
       tags:
-        - users
+        - rent-offers
       summary: Удаление предложения из избранного.
       description: Позволяет авторизованному пользователю удалить предложение из списка его избранных предложений.
 
       parameters:
-        - name: token
-          in: query
-          schema:
-            type: string
-          required: true
-        - name: userId
-          in: path
-          schema:
-            type: string
-          required: true
-        - name: offerId
+        - name: rentOfferId
           description: Идентификатор предложения, которое требуется удалить из избранного.
           in: query
           schema:
@@ -431,6 +439,9 @@ paths:
         "200":
           description: Предложение успешно удалено из избранных.
 
+        "400":
+          description: Невалидный идентификатор предложения.
+
         "401":
           description: Ошибка авторизации. Ресурс доступен только авторизованным клиентам.
 
@@ -439,22 +450,12 @@ paths:
 
     post:
       tags:
-        - users
+        - rent-offers
       summary: Добавление предложения в избранное.
       description: Позволяет авторизованному пользователю добавить предложение в список его избранных предложений.
 
       parameters:
-        - name: token
-          in: query
-          schema:
-            type: string
-          required: true
-        - name: userId
-          in: path
-          schema:
-            type: string
-          required: true
-        - name: offerId
+        - name: rentOfferId
           description: Идентификатор предложения, которое требуется добавить в избранное.
           in: query
           schema:
@@ -464,6 +465,9 @@ paths:
       responses:
         "201":
           description: Предложение успешно добавлено в избранное.
+
+        "400":
+          description: Невалидный идентификатор предложения.
 
         "401":
           description: Ошибка авторизации. Ресурс доступен только авторизованным клиентам.
@@ -641,4 +645,21 @@ components:
           type: string
 
         password:
+          type: string
+
+    authorizedUser:
+      type: object
+
+      properties:
+        email:
+          type: string
+
+        token:
+          type: string
+
+    userAvatar:
+      type: object
+
+      properties:
+        path:
           type: string

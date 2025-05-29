@@ -76,15 +76,15 @@ export class DefaultRentOfferService implements RentOfferService {
       .exec();
   }
 
-  public async addFavoriteRentOffer(userId: string, offerId: string): Promise<void> {
-    await this.offerModel.findByIdAndUpdate(
+  public async addFavoriteRentOffer(userId: string, offerId: string): Promise<DocumentType<RentOfferEntity> | null> {
+    return await this.offerModel.findByIdAndUpdate(
       offerId,
       { $addToSet: { favoriteUserIds: userId } }
     ).exec();
   }
 
-  public async removeFavoriteRentOffer(userId: string, offerId: string): Promise<void> {
-    await this.offerModel.findByIdAndUpdate(
+  public async removeFavoriteRentOffer(userId: string, offerId: string): Promise<DocumentType<RentOfferEntity> | null> {
+    return await this.offerModel.findByIdAndUpdate(
       offerId,
       { $pull: { favoriteUserIds: userId } }
     ).exec();

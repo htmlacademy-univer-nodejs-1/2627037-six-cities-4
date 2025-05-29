@@ -9,6 +9,7 @@ import { TokenPayload } from './types/token-payload.js';
 import { Config, RestSchema } from '../../libs/config/index.js';
 import { UserNotFoundException, UserPasswordIncorrectException } from './errors/index.js';
 import { JWT_ALGORITHM, JWT_EXPIRED } from './auth.constant.js';
+import { LogoutUserDto } from '../user/dto/logout-user.dto.js';
 
 @injectable()
 export class DefaultAuthService implements AuthService {
@@ -21,16 +22,7 @@ export class DefaultAuthService implements AuthService {
   public async authenticate(user: UserEntity): Promise<string> {
     const jwtSecret = this.config.get('JWT_SECRET');
     const secretKey = crypto.createSecretKey(jwtSecret, 'utf-8');
-    const tokenPayload: TokenPayload = {
-      email: user.email,
-      name: user.name,
-      id: user.id,
-    };
-
-    this.logger.info(`Creating token for user with email ${user.email}`);
-    return new SignJWT(tokenPayload)
-      .setProtectedHeader({ alg: JWT_ALGORITHM })
-      .setIssuedAt()
+    return (await this.createTokenObject(user))
       .setExpirationTime(JWT_EXPIRED)
       .sign(secretKey);
   }
@@ -48,5 +40,33 @@ export class DefaultAuthService implements AuthService {
     }
 
     return user;
+  }
+
+  public async logout(dto: LogoutUserDto): Promise<string> {
+    const jwtSecret = this.config.get('JWT_SECRET');
+    const secretKey = crypto.createSecretKey(jwtSecret, 'utf-8');
+
+    const user = await this.userService.findByEmail(dto.email);
+    if (! user) {
+      this.logger.warn(`User with email ${dto.email} not found`);
+      throw new UserNotFoundException();
+    }
+
+    return (await this.createTokenObject(user))
+      .setExpirationTime('0s')
+      .sign(secretKey);
+  }
+
+  private async createTokenObject(user: UserEntity): Promise<SignJWT> {
+    const tokenPayload: TokenPayload = {
+      email: user.email,
+      name: user.name,
+      id: user.id,
+    };
+
+    this.logger.info(`Creating token for user with email ${user.email}`);
+    return new SignJWT(tokenPayload)
+      .setProtectedHeader({ alg: JWT_ALGORITHM })
+      .setIssuedAt();
   }
 }

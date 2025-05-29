@@ -1,0 +1,13 @@
+### Добавление комментария к существующему предложению.
+POST http://localhost:3000/comments/create HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer <your_token>
+
+{
+  "text": "Comment text",
+  "rating": 5,
+  "offerId": "<offer_id>"
+}
+
+### Получение списка последних комментариев к существующему предложению.
+GET http://localhost:3000/comments/<rent_offer_id> HTTP/1.1

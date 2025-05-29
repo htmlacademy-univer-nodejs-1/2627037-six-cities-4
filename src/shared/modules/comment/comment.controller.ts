@@ -55,15 +55,7 @@ export class CommentController extends BaseController {
   ): Promise<void> {
     const result = await this.commentService.findByRentOfferId(params.offerId);
 
-    if (! result) {
-      throw new HttpError(
-        StatusCodes.NOT_FOUND,
-        `Comment with offer id '${params.offerId}' does not exist.`,
-        'CommentController'
-      );
-    }
-
-    this.ok(res, fillDTO(ViewCommentRdo, result));
+    this.ok(res, fillDTO(ViewCommentRdo, result ? result : []));
   }
 
   public async createComment(

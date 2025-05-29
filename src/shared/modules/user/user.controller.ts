@@ -8,7 +8,6 @@ import {
   PrivateRouteMiddleware,
   UploadFileMiddleware,
   ValidateDtoMiddleware,
-  ValidateObjectIdMiddleware
 } from '../../libs/rest/index.js';
 import { Logger } from '../../libs/logger/index.js';
 import { Component } from '../../types/index.js';
@@ -24,6 +23,7 @@ import { AuthService } from '../auth/index.js';
 import { AuthorizedUserRdo } from './rdo/authorized-user.rdo.js';
 import { LogoutUserRequest } from './request/logout-user-request.type.js';
 import { LoginUserDto } from './dto/login-user.dto.js';
+import { UserAvatarRdo } from './rdo/user-avatar.rdo.js';
 
 @injectable()
 export class UserController extends BaseController {
@@ -63,12 +63,11 @@ export class UserController extends BaseController {
       handler: this.checkAuth,
     });
     this.addRoute({
-      path: '/:userId/avatar',
+      path: '/avatar',
       method: HttpMethod.Post,
       handler: this.uploadAvatar,
       middlewares: [
         new PrivateRouteMiddleware(),
-        new ValidateObjectIdMiddleware('userId'),
         new UploadFileMiddleware(this.configService.get('UPLOAD_DIRECTORY'), 'avatar'),
       ]
     });
@@ -96,27 +95,37 @@ export class UserController extends BaseController {
     { body }: LoginUserRequest,
     res: Response,
   ): Promise<void> {
+    const existsUser = await this.userService.findByEmail(body.email);
+
+    if (! existsUser) {
+      throw new HttpError(
+        StatusCodes.NOT_FOUND,
+        `User with email «${body.email}» not found.`,
+        'UserController'
+      );
+    }
+
     const user = await this.authService.verify(body);
     const token = await this.authService.authenticate(user);
     this.ok(res, fillDTO(AuthorizedUserRdo, { email: user.email, token }));
   }
 
   public async logout(
-    { tokenPayload }: LogoutUserRequest,
+    { body }: LogoutUserRequest,
     res: Response,
   ): Promise<void> {
-    const { email } = tokenPayload;
-    const foundUser = await this.userService.findByEmail(email);
+    const foundUser = await this.userService.findByEmail(body.email);
 
     if (! foundUser) {
       throw new HttpError(
-        StatusCodes.UNAUTHORIZED,
-        'Unauthorized',
-        'UserController',
+        StatusCodes.NOT_FOUND,
+        `User with email «${body.email}» not found.`,
+        'UserController'
       );
     }
 
-    this.ok(res, fillDTO(AuthorizedUserRdo, foundUser));
+    const token = await this.authService.logout(body);
+    this.ok(res, fillDTO(AuthorizedUserRdo, { email: body.email, token }));
   }
 
   public async checkAuth({ tokenPayload: { email }}: Request, res: Response) {
@@ -124,8 +133,8 @@ export class UserController extends BaseController {
 
     if (! foundUser) {
       throw new HttpError(
-        StatusCodes.UNAUTHORIZED,
-        'Unauthorized',
+        StatusCodes.NOT_FOUND,
+        `User with email «${email}» not found.`,
         'UserController',
       );
     }
@@ -133,9 +142,16 @@ export class UserController extends BaseController {
     this.ok(res, fillDTO(AuthorizedUserRdo, foundUser));
   }
 
-  public async uploadAvatar(req: Request, res: Response) {
-    this.created(res, {
-      filepath: req.file?.path
-    });
+  public async uploadAvatar({ tokenPayload, file }: Request, res: Response) {
+    if (! file) {
+      throw new HttpError(
+        StatusCodes.BAD_REQUEST,
+        'File required',
+        'UserController',
+      );
+    }
+    const update = { avatarPath: file?.filename };
+    await this.userService.uploadAvatar(update, tokenPayload.id);
+    this.created(res, fillDTO(UserAvatarRdo, update));
   }
 }

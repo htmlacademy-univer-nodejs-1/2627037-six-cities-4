@@ -17,7 +17,6 @@ export class DefaultUserService implements UserService {
     const user = new UserEntity({
       ...dto,
       userType: UserType.Default,
-      favoriteOfferIds: []
     });
     user.setPassword(dto.password, salt);
 
@@ -28,11 +27,11 @@ export class DefaultUserService implements UserService {
   }
 
   public async findByEmail(email: string): Promise<DocumentType<UserEntity> | null> {
-    return this.userModel.findOne({email});
+    return await this.userModel.findOne({ email }).exec();
   }
 
   public async findById(id: string): Promise<DocumentType<UserEntity> | null> {
-    return this.userModel.findOne({ _id: id });
+    return await this.userModel.findById(id).exec();
   }
 
   public async findOrCreate(dto: CreateUserDto, salt: string): Promise<DocumentType<UserEntity>> {
@@ -43,27 +42,6 @@ export class DefaultUserService implements UserService {
     }
 
     return this.create(dto, salt);
-  }
-
-  public async addFavorite(userId: string, offerId: string): Promise<void> {
-    await this.userModel.findByIdAndUpdate(
-      userId,
-      { $push: { favoriteOfferIds: offerId } },
-      { new: true }
-    ).exec();
-  }
-
-  public async removeFavorite(userId: string, offerId: string): Promise<void> {
-    await this.userModel.findByIdAndUpdate(
-      userId,
-      { $pull: { favoriteOfferIds: offerId } },
-      { new: true }
-    ).exec();
-  }
-
-  public async getFavoriteOfferIds(userId: string): Promise<string[]> {
-    const result = await this.userModel.findOne({ _id: userId }).exec();
-    return result ? result.favoriteOfferIds : [];
   }
 
   public async exists(documentId: string): Promise<boolean> {

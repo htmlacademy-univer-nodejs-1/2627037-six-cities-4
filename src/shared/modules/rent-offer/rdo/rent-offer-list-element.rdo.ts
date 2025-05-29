@@ -1,5 +1,4 @@
 import { Expose } from 'class-transformer';
-import { CityName, HousingType } from '../../../types/index.js';
 
 export class RentOfferListElementRdo {
   @Expose()
@@ -9,16 +8,16 @@ export class RentOfferListElementRdo {
   public title: string;
 
   @Expose()
-  public housingType: HousingType;
+  public housingType: string;
 
   @Expose()
   public isFavorite: boolean;
 
-  @Expose()
-  public publicationDate: Date;
+  @Expose({ name: 'createdAt' })
+  public postDate: string;
 
   @Expose()
-  public cityName: CityName;
+  public cityName: string;
 
   @Expose()
   public preview: string;

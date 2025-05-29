@@ -1,14 +1,14 @@
 import { Command } from './command.interface.js';
 import { TSVFileReader } from '../../shared/libs/file-reader/index.js';
-import { createOffer, getErrorMessage, getMongoURI } from '../../shared/helpers/index.js';
-import { UserService } from '../../shared/modules/user/user-service.interface.js';
+import { getErrorMessage, getMongoURI } from '../../shared/helpers/index.js';
+import { UserService } from '../../shared/modules/user/index.js';
 import { DefaultRentOfferService, RentOfferModel, RentOfferService } from '../../shared/modules/rent-offer/index.js';
 import { DatabaseClient, MongoDatabaseClient } from '../../shared/libs/database-client/index.js';
 import { Logger } from '../../shared/libs/logger/index.js';
 import { ConsoleLogger } from '../../shared/libs/logger/console.logger.js';
 import { DefaultUserService, UserModel } from '../../shared/modules/user/index.js';
 import { DEFAULT_DB_PORT, DEFAULT_USER_PASSWORD } from './command.constant.js';
-import { RentOffer } from '../../shared/types/index.js';
+import { Amenity, CityName, HousingType, RentOffer, UserType } from '../../shared/types/index.js';
 
 export class ImportCommand implements Command {
   private userService: UserService;
@@ -25,44 +25,6 @@ export class ImportCommand implements Command {
     this.rentOfferService = new DefaultRentOfferService(this.logger, RentOfferModel);
     this.userService = new DefaultUserService(this.logger, UserModel);
     this.databaseClient = new MongoDatabaseClient(this.logger);
-  }
-
-  private async onImportedLine(line: string, resolve: () => void) {
-    const offer = createOffer(line);
-    await this.saveRentOffer(offer);
-    resolve();
-  }
-
-  private onCompleteImport(count: number) {
-    console.info(`${count} rows imported.`);
-    this.databaseClient.disconnect();
-  }
-
-  private async saveRentOffer(rentOffer: RentOffer) {
-    const user = await this.userService.findOrCreate({
-      ...rentOffer.author,
-      password: DEFAULT_USER_PASSWORD
-    }, this.salt);
-
-    await this.rentOfferService.create({
-      title: rentOffer.title,
-      description: rentOffer.description,
-      postDate: rentOffer.postDate,
-      cityName: rentOffer.cityName,
-      preview: rentOffer.preview,
-      photos: rentOffer.photos,
-      isPremium: rentOffer.isPremium,
-      isFavorite: rentOffer.isFavorite,
-      rating: rentOffer.rating,
-      housingType: rentOffer.housingType,
-      roomsCount: rentOffer.roomsCount,
-      visitorsCount: rentOffer.visitorsCount,
-      rentCost: rentOffer.rentCost,
-      amenities: rentOffer.amenities,
-      authorId: user.id,
-      commentsCount: rentOffer.commentsCount,
-      cityCoordinates: rentOffer.cityCoordinates
-    });
   }
 
   public getName(): string {
@@ -93,5 +55,102 @@ export class ImportCommand implements Command {
       console.error(`Can't import data from file: ${filename}`);
       console.error(getErrorMessage(error));
     }
+  }
+
+  private async onImportedLine(line: string, resolve: () => void) {
+    const offer = this.createOffer(line);
+    await this.saveRentOffer(offer);
+    resolve();
+  }
+
+  private onCompleteImport(count: number) {
+    console.info(`${count} rows imported.`);
+    this.databaseClient.disconnect();
+  }
+
+  private async saveRentOffer(rentOffer: RentOffer) {
+    const user = await this.userService.findOrCreate({
+      ...rentOffer.author,
+      password: DEFAULT_USER_PASSWORD
+    }, this.salt);
+
+    await this.rentOfferService.create({
+      title: rentOffer.title,
+      description: rentOffer.description,
+      postDate: rentOffer.postDate,
+      cityName: rentOffer.cityName,
+      preview: rentOffer.preview,
+      photos: rentOffer.photos,
+      isPremium: rentOffer.isPremium,
+      housingType: rentOffer.housingType,
+      roomsCount: rentOffer.roomsCount,
+      visitorsCount: rentOffer.visitorsCount,
+      rentCost: rentOffer.rentCost,
+      amenities: rentOffer.amenities,
+      userId: user.id,
+    });
+  }
+
+  private createOffer(offerData: string): RentOffer {
+    const [
+      title,
+      description,
+      createdDate,
+      cityName,
+      preview,
+      photos,
+      isPremium,
+      isFavorite,
+      rating,
+      housingType,
+      roomsCount,
+      visitorsCount,
+      rentCost,
+      amenities,
+      commentsCount,
+
+      latitude,
+      longitude,
+
+      name,
+      email,
+      avatar,
+      password,
+      userType,
+    ] = offerData.replace('\n', '').split('\t');
+
+    const user = {
+      name,
+      email,
+      avatar,
+      password,
+      userType: userType as UserType,
+    };
+
+    const cityCoordinates = {
+      latitude: Number.parseInt(latitude, 10),
+      longitude: Number.parseInt(longitude, 10),
+    };
+
+    return {
+      title,
+      description,
+      postDate: new Date(createdDate),
+      cityName: CityName[cityName as 'Paris' | 'Cologne' | 'Brussels' | 'Amsterdam' | 'Hamburg' | 'Dusseldorf'],
+      preview,
+      photos: photos.split(';'),
+      isPremium: isPremium === 'true',
+      isFavorite: isFavorite === 'true',
+      rating: Number.parseInt(rating, 10),
+      housingType: housingType as HousingType,
+      roomsCount: Number.parseInt(roomsCount, 10),
+      visitorsCount: Number.parseInt(visitorsCount, 10),
+      rentCost: Number.parseInt(rentCost, 10),
+      amenities: amenities.split(';')
+        .map((amenity) => amenity as Amenity),
+      author: user,
+      commentsCount: Number.parseInt(commentsCount, 10),
+      cityCoordinates: cityCoordinates,
+    };
   }
 }

@@ -1,7 +1,10 @@
-import { IsString } from 'class-validator';
-import { CreateUserValidationMessages } from './create-user.messages.js';
+import { IsEmail, IsString } from 'class-validator';
+import { UserValidationMessages } from './user.messages.js';
 
 export class LogoutUserDto {
-  @IsString({ message: CreateUserValidationMessages.token.invalidFormat })
-  public token: string;
+  @IsString({ message: UserValidationMessages.token.invalidFormat })
+  public token!: string;
+
+  @IsEmail({}, { message: UserValidationMessages.email.invalidFormat })
+  public email!: string;
 }

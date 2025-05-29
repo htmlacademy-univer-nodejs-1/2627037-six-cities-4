@@ -4,6 +4,7 @@ import {
   DocumentExistsMiddleware,
   HttpError,
   HttpMethod,
+  PrivateRouteMiddleware,
   ValidateDtoMiddleware,
   ValidateObjectIdMiddleware
 } from '../../libs/rest/index.js';
@@ -29,7 +30,7 @@ export class CommentController extends BaseController {
     this.logger.info('Register routes for CommentController…');
 
     this.addRoute({
-      path: '/',
+      path: '/:offerId',
       method: HttpMethod.Get,
       handler: this.indexComments,
       middlewares: [
@@ -41,7 +42,10 @@ export class CommentController extends BaseController {
       path: '/create',
       method: HttpMethod.Post,
       handler: this.createComment,
-      middlewares: [new ValidateDtoMiddleware(CreateOfferCommentDto)],
+      middlewares: [
+        new PrivateRouteMiddleware(),
+        new ValidateDtoMiddleware(CreateOfferCommentDto),
+      ],
     });
   }
 
@@ -63,7 +67,7 @@ export class CommentController extends BaseController {
   }
 
   public async createComment(
-    { body }: Request<unknown, unknown, CreateOfferCommentDto>,
+    { body, tokenPayload }: Request<unknown, unknown, CreateOfferCommentDto>,
     res: Response,
   ): Promise<void> {
     const existsOffer = await this.rentOfferService.findById(body.offerId);
@@ -76,8 +80,7 @@ export class CommentController extends BaseController {
       );
     }
 
-    const result = await this.commentService.create(body);
-
+    const result = await this.commentService.create({ ...body, userId: tokenPayload.id });
     this.created(res, fillDTO(ViewCommentRdo, result));
   }
 }

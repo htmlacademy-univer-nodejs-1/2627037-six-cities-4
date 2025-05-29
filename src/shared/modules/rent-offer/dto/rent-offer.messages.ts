@@ -1,4 +1,4 @@
-export const CreateRentOfferValidationMessage = {
+export const RentOfferValidationMessage = {
   title: {
     minLength: 'min length is 10',
     maxLength: 'max length is 100',
@@ -20,6 +20,7 @@ export const CreateRentOfferValidationMessage = {
     invalidFormat: 'photos must be of array type',
     minLength: 'array length must be equal to 6',
     maxLength: 'array length must be equal to 6',
+    invalidContent: 'array must contain only string values'
   },
   isPremium: {
     invalidFormat: 'isPremium must be of boolean type',

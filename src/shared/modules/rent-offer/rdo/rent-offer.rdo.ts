@@ -1,5 +1,6 @@
-import { Expose } from 'class-transformer';
-import { Amenity, CityCoordinates, CityName, HousingType } from '../../../types/index.js';
+import { Expose, Type } from 'class-transformer';
+import { ViewUserRdo } from '../../user/index.js';
+import { CityCoordinates, CityName } from '../../../types/index.js';
 
 export class RentOfferRdo {
   @Expose()
@@ -8,8 +9,8 @@ export class RentOfferRdo {
   @Expose()
   public description: string;
 
-  @Expose()
-  public postDate: Date;
+  @Expose({ name: 'createdAt' })
+  public postDate: string;
 
   @Expose()
   public cityName: CityName;
@@ -30,7 +31,7 @@ export class RentOfferRdo {
   public rating: number;
 
   @Expose()
-  public housingType: HousingType;
+  public housingType: string;
 
   @Expose()
   public roomsCount: number;
@@ -42,10 +43,11 @@ export class RentOfferRdo {
   public rentCost: number;
 
   @Expose()
-  public amenities: Amenity[];
+  public amenities: string[];
 
   @Expose()
-  public authorId: string;
+  @Type(() => ViewUserRdo)
+  public user: ViewUserRdo;
 
   @Expose()
   public commentsCount: number;

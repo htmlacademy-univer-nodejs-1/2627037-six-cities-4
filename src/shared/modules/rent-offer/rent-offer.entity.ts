@@ -12,75 +12,75 @@ export interface RentOfferEntity extends defaultClasses.Base {}
 })
 // eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export class RentOfferEntity extends defaultClasses.TimeStamps {
-  @prop({ trim: true, required: true })
+  @prop({ trim: true, required: true, minlength: 10, maxlength: 1024 })
   public title!: string;
 
-  @prop({trim: true})
+  @prop({ trim: true, required: true, minlength: 20, maxlength: 1024 })
   public description!: string;
-
-  @prop()
-  public postDate: Date;
-
-  @prop({
-    type: () => String,
-    enum: CityName
-  })
-  public cityName: CityName;
-
-  @prop()
-  public preview: string;
 
   @prop({
     required: true,
+    type: () => String,
+    enum: CityName
+  })
+  public cityName!: CityName;
+
+  @prop({ required: true })
+  public preview!: string;
+
+  @prop({
+    required: true,
+    validate: (arr: string[]) => arr.length === 6,
     default: [],
     _id: false
   })
-  public photos: string[];
+  public photos!: string[];
 
-  @prop()
-  public isPremium: boolean;
+  @prop({ required: true })
+  public isPremium!: boolean;
 
-  @prop()
-  public isFavorite: boolean;
-
-  @prop()
-  public rating: number;
+  @prop({ required: true, min: 1, max: 5 })
+  public rating!: number;
 
   @prop({
+    required: true,
     type: () => String,
     enum: HousingType
   })
-  public housingType: HousingType;
+  public housingType!: HousingType;
 
-  @prop()
-  public roomsCount: number;
+  @prop({ required: true, min: 1, max: 8 })
+  public roomsCount!: number;
 
-  @prop()
-  public visitorsCount: number;
+  @prop({ required: true, min: 1, max: 10 })
+  public visitorsCount!: number;
 
-  @prop()
-  public rentCost: number;
+  @prop({ required: true, min: 100, max: 100_000 })
+  public rentCost!: number;
 
   @prop({
-    type: () => String,
+    type: () => [String],
     enum: Amenity,
     required: true,
     default: [],
     _id: false
   })
-  public amenities: Amenity[];
+  public amenities!: Amenity[];
 
   @prop({
     ref: UserEntity,
     required: true
   })
-  public authorId: Ref<UserEntity>;
+  public userId!: Ref<UserEntity>;
 
-  @prop()
-  public commentsCount: number;
+  @prop({ required: true })
+  public commentsCount!: number;
 
-  @prop()
-  public cityCoordinates: CityCoordinates;
+  @prop({ required: true })
+  public cityCoordinates!: CityCoordinates;
+
+  @prop({ required: true })
+  public favoriteUserIds!: string[];
 }
 
 export const RentOfferModel = getModelForClass(RentOfferEntity);

@@ -1,4 +1,4 @@
-export const CreateUserValidationMessages = {
+export const UserValidationMessages = {
   name: {
     invalidFormat: 'name is required',
     lengthField: 'min length is 1, max is 15'
@@ -15,5 +15,8 @@ export const CreateUserValidationMessages = {
   },
   token: {
     invalidFormat: 'token is required',
-  }
+  },
+  userType: {
+    invalidFormat: 'userType must be valid UserType enum value',
+  },
 } as const;

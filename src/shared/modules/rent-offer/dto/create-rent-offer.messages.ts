@@ -48,5 +48,6 @@ export const CreateRentOfferValidationMessage = {
   },
   userId: {
     invalidFormat: 'userId is required',
+    invalidId: 'userId field must be a valid id',
   },
 } as const;

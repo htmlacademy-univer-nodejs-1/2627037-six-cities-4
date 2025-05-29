@@ -1,6 +1,7 @@
 import { inject, injectable } from 'inversify';
 import {
   BaseController,
+  DocumentExistsMiddleware,
   HttpError,
   HttpMethod,
   ValidateDtoMiddleware,
@@ -31,7 +32,10 @@ export class CommentController extends BaseController {
       path: '/',
       method: HttpMethod.Get,
       handler: this.indexComments,
-      middlewares: [new ValidateObjectIdMiddleware('offerId')],
+      middlewares: [
+        new ValidateObjectIdMiddleware('offerId'),
+        new DocumentExistsMiddleware(this.rentOfferService, 'RentOffer', 'offerId'),
+      ],
     });
     this.addRoute({
       path: '/create',
@@ -42,7 +46,7 @@ export class CommentController extends BaseController {
   }
 
   public async indexComments(
-    { params }: Request<ParamOfferId, unknown, unknown, unknown>,
+    { params }: Request<ParamOfferId>,
     res: Response,
   ): Promise<void> {
     const result = await this.commentService.findByRentOfferId(params.offerId);

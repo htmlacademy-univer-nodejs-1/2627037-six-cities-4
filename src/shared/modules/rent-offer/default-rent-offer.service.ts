@@ -32,26 +32,20 @@ export class DefaultRentOfferService implements RentOfferService {
     await this.offerModel.deleteOne({ _id: rentOfferId });
   }
 
-  public async getList(maxEntryCount: number = MAX_ENTRY_COUNT): Promise<DocumentType<RentOfferEntity>[]> {
-    const result = await this.offerModel.find().limit(maxEntryCount).exec();
+  public async getList(maxEntryCount: number | null): Promise<DocumentType<RentOfferEntity>[]> {
+    const entryCount = maxEntryCount ?? MAX_ENTRY_COUNT;
+    const result = await this.offerModel.find().limit(entryCount).exec();
     return result.sort((a: RentOfferEntity, b: RentOfferEntity) =>
       b.postDate.getMilliseconds() - a.postDate.getMilliseconds()
     );
   }
 
-  public async getListWithDefaultPagination(): Promise<DocumentType<RentOfferEntity>[]> {
-    return this.getList();
-  }
-
-  public async getPremiumRentOffers(cityName: CityName, maxEntryCount: number = MAX_PREMIUM_ENTRY_COUNT): Promise<RentOfferEntity[]> {
-    const result = await this.offerModel.find({ cityName: cityName }).limit(maxEntryCount);
+  public async getPremiumRentOffers(cityName: CityName, maxEntryCount: number | null): Promise<RentOfferEntity[]> {
+    const entryCount = maxEntryCount ?? MAX_PREMIUM_ENTRY_COUNT;
+    const result = await this.offerModel.find({ cityName: cityName }).limit(entryCount);
     return result.sort((a: RentOfferEntity, b: RentOfferEntity) =>
       b.postDate.getMilliseconds() - a.postDate.getMilliseconds()
     );
-  }
-
-  public async getPremiumRentOffersWithDefaultPagination(cityName: CityName): Promise<RentOfferEntity[]> {
-    return this.getPremiumRentOffers(cityName);
   }
 
   public async findById(rentOfferId: string): Promise<DocumentType<RentOfferEntity> | null> {

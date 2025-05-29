@@ -184,7 +184,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/createdRentOfferComment'
+                  $ref: '#/components/schemas/viewComment'
 
         "404":
           description: Указанное предложение не существует.
@@ -196,19 +196,12 @@ paths:
       summary: Добавление комментария к существующему предложению.
       description: Позволяет авторизованному пользователю добавить комментарий к существующему предложению.
 
-      parameters:
-        - name: rentOfferId
-          in: path
-          schema:
-            type: string
-          required: true
-
       requestBody:
         description: Информация о добавляемом комментарии.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/createRentOfferComment"
+              $ref: "#/components/schemas/createOfferComment"
         required: true
 
       responses:
@@ -217,7 +210,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/createdRentOfferComment'
+                $ref: '#/components/schemas/viewComment'
 
         "400":
           description: Валидация данных не была пройдена. Комментарий не был добавлен.
@@ -608,20 +601,23 @@ components:
         cityLongitude:
           type: number
 
-    createRentOfferComment:
+    createOfferComment:
       type: object
 
       properties:
+        offerId:
+          type: string
+
+        userId:
+          type: string
+
         text:
           type: string
 
         rating:
           type: integer
 
-        authorLink:
-          type: string
-
-    createdRentOfferComment:
+    viewComment:
       type: object
 
       properties:

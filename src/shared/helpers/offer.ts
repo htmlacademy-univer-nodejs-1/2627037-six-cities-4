@@ -25,7 +25,8 @@ export function createOffer(offerData: string): RentOffer {
     email,
     avatar,
     password,
-    userType
+    userType,
+    favoriteOfferIds
   ] = offerData.replace('\n', '').split('\t');
 
   const user = {
@@ -33,7 +34,8 @@ export function createOffer(offerData: string): RentOffer {
     email,
     avatar,
     password,
-    userType: userType as UserType
+    userType: userType as UserType,
+    favoriteOfferIds: favoriteOfferIds.split(';')
   };
 
   const cityCoordinates = {

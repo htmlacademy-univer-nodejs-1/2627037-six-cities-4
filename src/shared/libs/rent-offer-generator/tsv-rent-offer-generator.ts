@@ -18,7 +18,7 @@ export class TSVOfferGenerator implements OfferGenerator {
     const description = getRandomItem<string>(this.mockData.descriptions);
     const cityName = getRandomItem([CityName.Amsterdam, CityName.Brussels, CityName.Cologne, CityName.Dusseldorf, CityName.Hamburg, CityName.Paris]);
     const preview = getRandomItem<string>(this.mockData.offerImages);
-    const photos = getRandomItems<string>(this.mockData.offerImages).join(';');
+    const photos = getRandomItems<string>(this.mockData.offerImages, 6).join(';');
     const isPremium = getRandomItem<boolean>([true, false]);
     const isFavorite = getRandomItem<boolean>([true, false]);
     const rating = generateRandomValue(1, 5);
@@ -26,7 +26,7 @@ export class TSVOfferGenerator implements OfferGenerator {
     const roomsCount = generateRandomValue(1, 5);
     const visitorsCount = generateRandomValue(1, 5);
     const rentCost = generateRandomValue(MIN_PRICE, MAX_PRICE);
-    const amenities = getRandomItems<string>([Amenity.AirConditioning, Amenity.BabySeat, Amenity.Breakfast, Amenity.Fridge, Amenity.LaptopFriendlyWorkspace, Amenity.Towels, Amenity.Washer]).join(';');
+    const amenities = getRandomItems<string>([Amenity.AirConditioning, Amenity.BabySeat, Amenity.Breakfast, Amenity.Fridge, Amenity.LaptopFriendlyWorkspace, Amenity.Towels, Amenity.Washer], null).join(';');
     const commentsCount = generateRandomValue(1, 5);
 
     const latitude = generateRandomValue(1, 5);

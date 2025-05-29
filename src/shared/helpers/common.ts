@@ -4,9 +4,9 @@ export function generateRandomValue(min:number, max: number, numAfterDigit = 0) 
   return +((Math.random() * (max - min)) + min).toFixed(numAfterDigit);
 }
 
-export function getRandomItems<T>(items: T[]):T[] {
-  const startPosition = generateRandomValue(0, items.length - 1);
-  const endPosition = startPosition + generateRandomValue(startPosition, items.length);
+export function getRandomItems<T>(items: T[], count: number | null):T[] {
+  const startPosition = generateRandomValue(0, items.length - 1 - (count ? count! - 1 : 0));
+  const endPosition = startPosition + generateRandomValue(startPosition + (count ? count! : 0), items.length);
   return items.slice(startPosition, endPosition);
 }
 
